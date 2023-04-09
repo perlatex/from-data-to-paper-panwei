@@ -1,0 +1,29 @@
+# 附录 {-} 
+
+## 关于员工知识共享动机的调查问卷
+
+\newpage
+
+## 简单探索数据
+
+问卷变量中的类别数、缺失值、均值以及中位数等等
+
+```{r}
+library(modelsummary)
+
+df %>%
+  select(-id) %>% 
+  datasummary_skim(
+    type = "numeric",
+    histogram = F,
+    output = "flextable"
+  ) %>%
+  flextable::fontsize(size = 8, part = "all") %>% 
+  flextable::autofit()
+```
+
+
+\newpage
+
+# 个人履历 {-} 
+

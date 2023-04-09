@@ -1,0 +1,379 @@
+# 实证分析 {#analysis}
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(gtsummary)
+
+df <- read_rds("./data/df.rds")
+```
+
+
+## 说明
+
+我们研究的目标是确定员工知识共享动机与员工创造力之间的关系，确定员工的内生刺激对员工创造力的影响，以支持和推进现有的研究，并阐明其内在关系和原理，解决实际问题。我们选择九江市国家级经济技术开发区的工业园进行整群抽样。研究总体为102,000，样本量为385。
+
+## 基本信息
+
+统计性别、年龄、教育程度、工作经历等变量中不同类别所占比例见表 \@ref(tab:tab01): 
+
+```{r, tab.id='tab01'}
+df %>%
+  select(gender, age, educational_background, work_experience, position_level) %>%
+  mutate(gender = if_else(gender == 1, "male", "female")) %>%
+  mutate(age = factor(age,
+    labels = c(
+      "1" = "under 25",
+      "2" = "26-35",
+      "3" = "36-45",
+      "4" = "above 45"
+    )
+  )) %>%
+  mutate(educational_background = factor(educational_background,
+    labels = c(
+      "1" = "high school diploma or below",
+      "2" = "college degree",
+      "3" = "bachelor degree",
+      "4" = "graduate or above"
+    )
+  )) %>%
+  mutate(work_experience = factor(work_experience,
+    labels = c(
+      "1" = "less than 3 years",
+      "2" = "4-6 years",
+      "3" = "7-9 years",
+      "4" = "more than 10 years"
+    )
+  )) %>%
+  mutate(position_level = factor(position_level,
+    labels = c(
+      "1" = "general staff",
+      "2" = "first-line manager",
+      "3" = "middle manager",
+      "4" = "top manager"
+    )
+  )) %>%
+  gtsummary::tbl_summary() %>% 
+  gtsummary::modify_caption("Frequency and Percentage of Gender")
+```
+
+
+## 梳理变量层级
+
+
+根据问卷结果，统计每个被访者在每个主题的平均得分。
+
+```{r}
+df_expand <- df %>%
+  rowwise() %>%
+  mutate(
+    f_achievement  = mean(c_across(starts_with("a_achievement_"))),
+    f_collectivity = mean(c_across(starts_with("a_collectivity_"))),
+    f_social       = mean(c_across(starts_with("a_social_"))),
+    f_interest     = mean(c_across(starts_with("a_interest_"))),
+    f_rule         = mean(c_across(starts_with("a_rule_"))),
+    creativity     = mean(c_across(starts_with("b_")))
+  ) %>%
+  ungroup() 
+```
+
+
+
+## 描述性统计
+
+知识贡献的均值和方差见表 \@ref(tab:tab02): 
+
+```{r, tab.id='tab02'}
+df_expand %>%
+  select(contains("achievement")) %>% 
+  tbl_summary(
+    statistic = list(all_continuous() ~ "{mean} ({sd})"),
+    type = list(everything() ~ 'continuous')
+  ) %>% 
+  modify_caption("Mean & SD of The Perception of Achievement")
+```
+
+Table \@ref(tab:tab02) shows that the employee’s motivation for knowledge sharing is at an agreed level, X = 4.33, SD = 0.73. Meanwhile, all aspects of the employee’s motivation for knowledge sharing have a wide return at an agreed level. The highest is the aspect of construction of social relations, X = 4.39, SD = 0.73. The second level is the aspect of the perception of achievement, X = 4.38, SD = 0.75. The aspect of personal interest is the third, X = 4.33, SD = 0.81. The aspect of collective emotions and responsibilities is the next, X = 4.28, SD = 0.85. The last one is the aspect of rule obedience, X = 4.20, SD = 0.91.
+
+```{r, tab.id='tab03'}
+df_expand %>% 
+  select(contains("rule")) %>% 
+  tbl_summary(
+    statistic = list(everything() ~ "{mean} ({sd})"),
+    type = list(everything() ~ 'continuous')
+  ) %>% 
+  modify_caption("Mean & SD of The Rule")
+```
+
+表 \@ref(tab:tab03) 结果显示“规则”这个主题得分的均值和方差
+
+
+## 推断性统计分析
+
+检验不同类别的得分是否显著不同
+
+
+### 单因素T检验
+
+检验不同性别的得分是否存在显著差异，见表 \@ref(tab:tab04)
+
+```{r, tab.id='tab04'}
+df_expand %>% 
+  mutate(gender = as.character(gender)) %>% 
+  rstatix::t_test(total ~ gender) %>% 
+  
+  flextable::flextable() %>% 
+  flextable::autofit() %>% 
+  flextable::set_caption("Independent Samples t-test for Gender")
+```
+
+
+
+根据图 \@ref(fig:total-as-gender)可以看到不同性别还是有显著差异的
+
+```{r total-as-gender, fig.cap = '不同性别的得分'}
+library(ggstatsplot)
+
+df_expand %>% 
+  mutate(gender = as.character(gender)) %>% 
+  ggbetweenstats(
+    x  = gender,
+    y  = total
+ ) +
+  scale_color_manual(
+    values = c("red", "blue")
+  )
+```
+
+### 方差分析
+
+表 \@ref(tab:tab05)给出了年龄、教育背景、工作经历以及职位的方差分析结果
+
+```{r, tab.id='tab05'}
+df_expand %>%
+  select(age:position_level, total) %>% 
+  gtsummary::tbl_uvregression(
+    method = aov,
+    y = total,
+    pvalue_fun = function(x) style_pvalue(x, digits = 3)
+  ) %>% 
+  gtsummary::modify_caption("One-Way ANOVA for Age, Educational Background, Work Experience, and Position Level")
+```
+
+
+
+
+## 相关分析
+
+我们考察18个自变量及因变量之间的相关性，见图 \@ref(fig:Fig4-16)
+
+```{r, tab.id='tab06', eval=FALSE}
+df_expand %>%
+  select(starts_with("a_"), creativity) %>%
+  rstatix::cor_mat(method = "pearson") %>% 
+  flextable::flextable() %>% 
+  flextable::autofit() %>% 
+  flextable::set_caption("相关系数矩阵")
+```
+
+
+
+
+```{r Fig4-16, fig.asp=0.8, fig.width = 10, fig.cap="相关分析"}
+library(ggstatsplot)
+
+df_expand %>%
+  select(starts_with("a_"), creativity) %>%
+  ggcorrmat(
+    output      = "plot",
+    matrix.type = "lower",
+    type        = "parametric",
+    sig.level   = 0.05,
+    colors      = c("#E69F00", "white", "#009E73")
+  ) 
+```
+
+
+## 因子分析
+
+变量之间存在高度关联，因为我们必须回到原始数据，降维处理
+
+```{r}
+d_xvar <- df %>% 
+  mutate(
+    across(starts_with("a_"), ~ (.x - mean(.x)/sd(.x)))
+  ) %>% 
+  select(starts_with("a_"))
+```
+
+
+图 \@ref(fig:Fig4-17)是在探索其中的潜在因子
+
+```{r Fig4-17, fig.asp=0.8, fig.width = 6, fig.cap = "探索其中的潜在因子", results='hide'}
+library(psych)
+
+fa.parallel(d_xvar)
+```
+
+
+```{r}
+myfa <- d_xvar %>% 
+  fa(nfactors = 5, rotate = "varimax", fm = "minres", scores = T)
+```
+
+
+**因子载荷矩阵**，显示每个变量与每个因子之间的相关性，见表\@ref(tab:tab07)
+
+```{r, tab.id='tab07'}
+myfa$loadings %>% 
+  unclass() %>% 
+  as.data.frame() %>% 
+  rownames_to_column("variables") %>% 
+  flextable::flextable() %>% 
+  flextable::autofit() %>% 
+  flextable::set_caption("每个变量与每个因子之间的相关性")
+```
+
+
+
+根据载荷矩阵，我们可以看到每个变量对于每个因子的贡献程度，见图 \@ref(fig:myfaplot)。第1个因子主要反映的是前4项变量(a_achievement)的共同特征，而第2个因子主要反映(a_social)5项变量的特征。
+
+```{r myfaplot, fig.asp=1, fig.width = 9, fig.cap = "因子分析"}
+myfa %>% 
+  fa.diagram(digits = 3, rsize = 0.5)
+```
+
+**因子解释的百分比**见表\@ref(tab:tab08)，显示每个因子可以解释的数据方差的百分比。载荷矩阵之下的表格显示了每个因子的方差、方差比例和累计方差比例，以及每个因子解释的总方差比例。在这个例子中，第一个因子MR2解释了总方差的21%，第二个因子MR1解释了总方差的19.9%，第三个因子MR5解释了总方差的19.9%，第四个因子MR4解释了总方差的13.2%，第五个因子MR5解释了总方差的9.4%，这五个因子累计方差贡献率达到83.6%。这也是为什么要选择5个因子的原因。
+
+```{r, tab.id='tab08'}
+myfa$Vaccounted %>% 
+  as.data.frame() %>%  
+  rownames_to_column("item") %>% 
+  flextable::flextable() %>% 
+  flextable::autofit() %>% 
+  flextable::bg( 
+    i = ~ item == "Proportion Var", 
+    bg = "orange", 
+    part = "body"
+  ) %>% 
+  flextable::set_caption("因子解释的百分比")
+```
+
+
+```{r}
+df_factor <- myfa$scores %>% 
+  as_tibble() %>% 
+  bind_cols(df) %>% 
+  relocate(id, .before = MR2) %>% 
+  rename(
+    "Construction_of_Social_Relations" = MR1, 
+    "Perception_of_Achievement"        = MR2,  
+    "Personal_Preference"              = MR3,
+    "Collective_Behaviors"             = MR4, 
+    "Collective_Consciousness"         = MR5
+  ) %>%
+  rowwise() %>% 
+  mutate(creativity = mean(c_across(cols = starts_with("b_")))) %>% 
+  ungroup()
+
+# df_factor
+```
+
+
+## 回归分析
+
+以个人特质变量和5个公共因子作为自变量，建立多元线性回归模型。模型的数学表达式 
+
+
+$$
+\begin{aligned}
+\operatorname{creativity} = \alpha + & \beta_{1}(gender) + \beta_{2}(age) + \beta_{3}(educational\_background)\ + \\
+& \beta_{4}(work\_experience) + \beta_{5}(position\_level) \ + \\
+\\
+& \beta_{6}(Perception\_of\_Achievement)\ + \\ 
+& \beta_{7}(Construction\_of\_Social\_Relations)\ + \\
+& \beta_{8}(Collective\_Consciousness)\ + \\
+& \beta_{9}(Collective\_Behaviors) \ + \\ 
+& \beta_{10}(Personal\_Preference) \ + \epsilon,\quad \text{where}\quad
+\epsilon \sim \operatorname{normal}(0,\sigma).  
+\end{aligned}
+$$
+
+
+
+```{r}
+mod_linear <-
+  lm(
+    creativity ~ gender + age +
+      educational_background +
+      work_experience +
+      position_level +
+
+      Perception_of_Achievement +
+      Construction_of_Social_Relations +
+      Collective_Consciousness +
+      Collective_Behaviors +
+      Personal_Preference,
+    
+    data = df_factor
+  )
+```
+
+
+
+多元线性回归模型的输出结果见表\@ref(tab:tab-lm)
+
+```{r, tab.id='tab-lm'}
+mod_linear %>% 
+  gtsummary::tbl_regression() %>% 
+  gtsummary::modify_caption("多元线性回归模型系数")
+```
+
+
+由表\@ref(tab:tab-lm)看到看到人口因素的系数都包含了0，也就是创新性与性别、年龄和职位无关。
+
+
+
+
+系数代入模型方程，得到等式 \@ref(eq:linearmodels).
+
+
+\begin{equation}
+\begin{aligned}
+\widehat{creativity} = 4.38 + & 0.02(gender) - 0.03(age) - 0.02(educational\_background)\ + \\
+& 0.01(work\_experience) - 0.05(position\_level) \ + \\
+\\
+& 0.26(Perception\_of\_Achievement)\ + \\ 
+& 0.35(Construction\_of\_Social\_Relations)\ + \\
+& 0.35(Collective\_Consciousness)\ + \\
+& 0.26(Collective\_Behaviors) \ + \\ 
+& 0.28(Personal\_Preference) (\#eq:linearmodels)
+\end{aligned}
+\end{equation}
+
+
+
+查看边际效应，最后给出理论解释，可以看图\@ref(fig:cmeplot)
+
+```{r cmeplot, fig.asp=1.2, echo=FALSE, out.width= "80%", fig.cap = "边际效应图"}
+library(marginaleffects)
+library(patchwork)
+
+theme_set(
+  theme_classic() + 
+  theme(axis.title = element_text(size = rel(0.8)))
+)
+
+p1 <- plot_predictions(mod_linear, condition = "Perception_of_Achievement")
+p2 <- plot_predictions(mod_linear, condition = "Construction_of_Social_Relations")
+p3 <- plot_predictions(mod_linear, condition = "Collective_Consciousness")
+p4 <- plot_predictions(mod_linear, condition = "Collective_Behaviors")
+p5 <- plot_predictions(mod_linear, condition = "Personal_Preference")
+
+
+(p1 + p2 + p3 + p4 + p5) +
+  plot_layout(ncol = 2)
+```
+
+Figure \@ref(fig:cmeplot) shows the tendencies in all aspects of the Employee's Motivation for Knowledge Sharing and Employee Creativity. The employee's motivation for knowledge sharing as the explanatory variable is divided into 5 aspects, i.g. perception of achievement, collective emotions and responsibilities, construction of social relations, personal Interest and rule obedience. Meanwhile, employee creativity as the response variable. This figure depicts the prediction of employee creativity against values 5 predictors respectively. It indicates a positive proportional relationship between all aspects of the employee's motivation for knowledge sharing and employee creativity. It also provides a supporting basis for the conclusions of this study.
+
+\newpage

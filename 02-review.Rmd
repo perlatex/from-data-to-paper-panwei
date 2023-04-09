@@ -1,0 +1,8 @@
+# 相关理论及文献综述 {#review}
+
+## motivation for knowledge sharing
+
+Knowledge sharing is vital for gaining a competitive advantage as a unique, valuable, and critical resource. [@Ikujiro1995] Since the essential measure to improve the effectiveness of knowledge sharing lies in the design of effective knowledge-sharing incentives, motivation is the basis for the design of incentives. Therefore, knowledge-sharing motivation has attracted widespread academic interest increasingly. The current study findings lack systematicity, which is not conducive to grasping knowledge-sharing motivation issues at a holistic level and restricts the ability of organizations to manage employees' knowledge-sharing behavior. This study attempts to clarify the theoretical framework of knowledge-sharing motivation by comprehensively reviewing the literature of scholars and abroad to provide helpful guidance and inspiration for subsequent studies.
+
+
+\newpage
