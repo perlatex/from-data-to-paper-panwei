@@ -63,7 +63,7 @@ df %>%
 根据问卷结果，统计每个被访者在每个主题的平均得分。
 
 ```{r}
-df_expand <- df %>%
+df_expand_topic <- df %>%
   rowwise() %>%
   mutate(
     f_achievement  = mean(c_across(starts_with("a_achievement_"))),
@@ -83,7 +83,7 @@ df_expand <- df %>%
 知识贡献的均值和方差见表 \@ref(tab:tab02): 
 
 ```{r, tab.id='tab02', tab.cap = "Mean & SD of The Perception of Achievement"}
-df_expand %>%
+df_expand_topic %>%
   select(contains("achievement")) %>% 
   tbl_summary(
     statistic = list(all_continuous() ~ "{mean} ({sd})"),
@@ -94,7 +94,7 @@ df_expand %>%
 Table \@ref(tab:tab02) shows that the employee’s motivation for knowledge sharing is at an agreed level, X = 4.33, SD = 0.73. Meanwhile, all aspects of the employee’s motivation for knowledge sharing have a wide return at an agreed level. The highest is the aspect of construction of social relations, X = 4.39, SD = 0.73. The second level is the aspect of the perception of achievement, X = 4.38, SD = 0.75. The aspect of personal interest is the third, X = 4.33, SD = 0.81. The aspect of collective emotions and responsibilities is the next, X = 4.28, SD = 0.85. The last one is the aspect of rule obedience, X = 4.20, SD = 0.91.
 
 ```{r, tab.id='tab03'}
-df_expand %>% 
+df_expand_topic %>% 
   select(contains("rule")) %>% 
   tbl_summary(
     statistic = list(everything() ~ "{mean} ({sd})"),
@@ -116,7 +116,7 @@ df_expand %>%
 检验不同性别的得分是否存在显著差异，见表 \@ref(tab:tab04)
 
 ```{r, tab.id='tab04'}
-df_expand %>% 
+df_expand_topic %>% 
   mutate(gender = as.character(gender)) %>% 
   rstatix::t_test(total ~ gender) %>% 
   
@@ -132,7 +132,7 @@ df_expand %>%
 ```{r total-as-gender, fig.cap = '不同性别的得分'}
 library(ggstatsplot)
 
-df_expand %>% 
+df_expand_topic %>% 
   mutate(gender = as.character(gender)) %>% 
   ggbetweenstats(
     x  = gender,
@@ -148,7 +148,7 @@ df_expand %>%
 表 \@ref(tab:tab05)给出了年龄、教育背景、工作经历以及职位的方差分析结果
 
 ```{r, tab.id='tab05'}
-df_expand %>%
+df_expand_topic %>%
   select(age:position_level, total) %>% 
   gtsummary::tbl_uvregression(
     method = aov,
@@ -166,7 +166,7 @@ df_expand %>%
 我们考察18个自变量及因变量之间的相关性，见图 \@ref(fig:Fig4-16)
 
 ```{r, tab.id='tab06', eval=FALSE}
-df_expand %>%
+df %>%
   select(starts_with("a_"), creativity) %>%
   rstatix::cor_mat(method = "pearson") %>% 
   flextable::flextable() %>% 
@@ -180,7 +180,7 @@ df_expand %>%
 ```{r Fig4-16, fig.asp=0.8, fig.width = 10, fig.cap="相关分析"}
 library(ggstatsplot)
 
-df_expand %>%
+df %>%
   select(starts_with("a_"), creativity) %>%
   ggcorrmat(
     output      = "plot",
@@ -259,7 +259,7 @@ myfa$Vaccounted %>%
 
 
 ```{r}
-df_factor <- myfa$scores %>% 
+df_expand_factor <- myfa$scores %>% 
   as_tibble() %>% 
   bind_cols(df) %>% 
   relocate(id, .before = MR2) %>% 
@@ -274,7 +274,7 @@ df_factor <- myfa$scores %>%
   mutate(creativity = mean(c_across(cols = starts_with("b_")))) %>% 
   ungroup()
 
-# df_factor
+# df_expand_factor
 ```
 
 
@@ -313,7 +313,7 @@ mod_linear <-
       Collective_Behaviors +
       Personal_Preference,
     
-    data = df_factor
+    data = df_expand_factor
   )
 ```
 
