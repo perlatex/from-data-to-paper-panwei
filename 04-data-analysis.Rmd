@@ -82,14 +82,13 @@ df_expand <- df %>%
 
 知识贡献的均值和方差见表 \@ref(tab:tab02): 
 
-```{r, tab.id='tab02'}
+```{r, tab.id='tab02', tab.cap = "Mean & SD of The Perception of Achievement"}
 df_expand %>%
   select(contains("achievement")) %>% 
   tbl_summary(
     statistic = list(all_continuous() ~ "{mean} ({sd})"),
     type = list(everything() ~ 'continuous')
-  ) %>% 
-  modify_caption("Mean & SD of The Perception of Achievement")
+  )
 ```
 
 Table \@ref(tab:tab02) shows that the employee’s motivation for knowledge sharing is at an agreed level, X = 4.33, SD = 0.73. Meanwhile, all aspects of the employee’s motivation for knowledge sharing have a wide return at an agreed level. The highest is the aspect of construction of social relations, X = 4.39, SD = 0.73. The second level is the aspect of the perception of achievement, X = 4.38, SD = 0.75. The aspect of personal interest is the third, X = 4.33, SD = 0.81. The aspect of collective emotions and responsibilities is the next, X = 4.28, SD = 0.85. The last one is the aspect of rule obedience, X = 4.20, SD = 0.91.
