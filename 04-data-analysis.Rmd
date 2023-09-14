@@ -166,7 +166,7 @@ df_expand_topic %>%
 我们考察18个自变量及因变量之间的相关性，见图 \@ref(fig:Fig4-16)
 
 ```{r, tab.id='tab06', eval=FALSE}
-df %>%
+df_expand_topic %>%
   select(starts_with("a_"), creativity) %>%
   rstatix::cor_mat(method = "pearson") %>% 
   flextable::flextable() %>% 
@@ -180,7 +180,7 @@ df %>%
 ```{r Fig4-16, fig.asp=0.8, fig.width = 10, fig.cap="相关分析"}
 library(ggstatsplot)
 
-df %>%
+df_expand_topic %>%
   select(starts_with("a_"), creativity) %>%
   ggcorrmat(
     output      = "plot",

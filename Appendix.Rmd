@@ -9,8 +9,11 @@
 问卷变量中的类别数、缺失值、均值以及中位数等等
 
 ```{r}
+library(tidyverse)
+library(gtsummary)
 library(modelsummary)
 
+df <- read_rds("./data/df.rds")
 df %>%
   select(-id) %>% 
   datasummary_skim(
